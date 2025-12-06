@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Scorer - Brutally Honest Feedback</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #151515;
+            --bg-tertiary: #1a1a1a;
+            --accent: #00ff88;
+            --accent-dim: #00cc6a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-tertiary: #606060;
+            --border: #2a2a2a;
+            --error: #ff4444;
+            --warning: #ffaa00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        .warning-badge {
+            display: inline-block;
+            background: var(--error);
+            color: var(--bg-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .section:hover {
+            border-color: var(--accent);
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 200px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: var(--bg-tertiary);
+        }
+
+        .file-upload:hover,
+        .file-upload.dragover {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-name {
+            color: var(--accent);
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--accent-dim);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #results {
+            display: none;
+        }
+
+        #results.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .score-header {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .overall-score {
+            font-family: 'Syne', sans-serif;
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .pass-likelihood {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .markdown-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .markdown-content h2 {
+            font-family: 'Syne', sans-serif;
+            color: var(--accent);
+            margin: 2rem 0 1rem;
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .markdown-content h3 {
+            font-family: 'Syne', sans-serif;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.3rem;
+        }
+
+        .markdown-content p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .markdown-content strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .markdown-content code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            color: var(--accent);
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .chat-container {
+            margin-top: 2rem;
+        }
+
+        .chat-messages {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .chat-message.user {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent);
+            margin-left: 2rem;
+        }
+
+        .chat-message.assistant {
+            background: var(--bg-primary);
+            border-left: 3px solid var(--text-tertiary);
+            margin-right: 2rem;
+        }
+
+        .chat-message-label {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input-group textarea {
+            flex: 1;
+            min-height: 80px;
+        }
+
+        .chat-input-group button {
+            align-self: flex-end;
+        }
+
+        .info-box {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .info-box strong {
+            color: var(--warning);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .overall-score {
+                font-size: 3.5rem;
+            }
+
+            .chat-input-group {
+                flex-direction: column;
+            }
+
+            .chat-message.user {
+                margin-left: 0;
+            }
+
+            .chat-message.assistant {
+                margin-right: 0;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            body::before {
+                display: none;
+            }
+
+            .section:not(#results .section) {
+                display: none !important;
+            }
+
+            header {
+                border-bottom: 2px solid #000;
+                page-break-after: avoid;
+            }
+
+            .warning-badge,
+            button,
+            .chat-container,
+            #cacheIndicator,
+            #loading {
+                display: none !important;
+            }
+
+            .score-header {
+                border: 2px solid #000 !important;
+                background: #f0f0f0 !important;
+                page-break-inside: avoid;
+            }
+
+            .markdown-content {
+                page-break-inside: avoid;
+            }
+
+            .markdown-content h2 {
+                page-break-after: avoid;
+                border-bottom-color: #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ATS RESUME SCORER</h1>
+            <p class="subtitle">Brutally honest feedback to help you pass real ATS systems</p>
+            <div class="warning-badge">⚠ STRICT MODE ENABLED</div>
+        </header>
+
+        <div class="section">
+            <div class="section-title">Configuration</div>
+            
+            <div class="info-box">
+                <p><strong>Privacy Notice:</strong> Your API key is only used client-side and never stored or sent anywhere except directly to Google's Gemini API. This tool runs entirely in your browser.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="apiKey">Gemini API Key *</label>
+                <div style="position: relative;">
+                    <input
+                        type="password"
+                        id="apiKey"
+                        placeholder="Enter your Gemini API key"
+                        autocomplete="off"
+                        aria-label="Gemini API Key"
+                        style="padding-right: 3rem;"
+                    >
+                    <button
+                        type="button"
+                        id="toggleApiKey"
+                        onclick="toggleApiKeyVisibility()"
+                        style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.5rem; font-size: 1.2rem;"
+                        aria-label="Toggle API key visibility"
+                        title="Show/hide API key"
+                    >👁️</button>
+                </div>
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; cursor: pointer; color: var(--text-secondary); font-size: 0.85rem; text-transform: none;">
+                    <input type="checkbox" id="rememberApiKey" style="cursor: pointer; width: auto;" aria-label="Remember API key">
+                    Remember API key (stored in browser localStorage - use at your own risk)
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="modelSelect">Model</label>
+                <select id="modelSelect" aria-label="Select AI model">
+                    <option value="gemini-3-pro-preview" selected>Gemini 3 Pro Preview</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                    <option value="gemini-flash-lite-latest">Gemini Flash Lite Latest</option>
+                    <option value="gemini-flash-latest">Gemini Flash Latest</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="jobContext">Job Context (Optional)</label>
+                <input
+                    type="text"
+                    id="jobContext"
+                    placeholder="e.g., 'Data Engineer' or 'Senior Backend Engineer - Python/AWS'"
+                    aria-label="Job context or title"
+                >
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Resume Input</div>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="upload">Upload File</button>
+                <button class="tab" data-tab="paste">Paste Text</button>
+                <button class="tab" data-tab="url">From URL</button>
+            </div>
+
+            <div class="tab-content active" id="upload">
+                <div class="file-upload" id="fileUpload" role="button" tabindex="0" aria-label="Upload resume file">
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.yaml,.yml,.md" aria-label="Resume file input">
+                    <div class="upload-icon" aria-hidden="true">📄</div>
+                    <div class="upload-text">Drop your resume here or click to browse</div>
+                    <div class="upload-text" style="font-size: 0.85rem; margin-top: 0.5rem;">Supports: PDF, DOCX, TXT, YAML, MD</div>
+                    <div class="file-name hidden" id="fileName"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="paste">
+                <textarea
+                    id="resumeText"
+                    placeholder="Paste your resume text here..."
+                    aria-label="Resume text content"
+                ></textarea>
+            </div>
+
+            <div class="tab-content" id="url">
+                <input
+                    type="text"
+                    id="resumeUrl"
+                    placeholder="Enter URL to your resume (must be publicly accessible)"
+                    aria-label="Resume URL"
+                >
+                <p style="color: var(--text-tertiary); font-size: 0.85rem; margin-top: 0.5rem;">
+                    Note: URL must be publicly accessible and CORS-enabled
+                </p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Job Description (Optional)</div>
+            <textarea
+                id="jobDescription"
+                placeholder="Paste the job description here for more accurate scoring. If left empty, will evaluate based on job context/title."
+                aria-label="Job description"
+            ></textarea>
+        </div>
+
+        <div style="text-align: center; margin: 2rem 0;">
+            <button id="analyzeBtn" onclick="analyzeResume()" aria-label="Analyze resume">
+                🎯 ANALYZE RESUME
+            </button>
+            <div style="margin-top: 1rem;">
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem; text-transform: none;">
+                    <input type="checkbox" id="forceRegenerate" style="cursor: pointer; width: auto;" aria-label="Force fresh analysis">
+                    Force fresh analysis (bypass cache)
+                </label>
+            </div>
+        </div>
+
+        <div class="loading" id="loading" role="status" aria-live="polite">
+            <div class="spinner" aria-hidden="true"></div>
+            <p style="color: var(--text-secondary);" id="loadingText">Analyzing your resume with brutal honesty...</p>
+            <p style="color: var(--accent); font-size: 0.9rem; margin-top: 0.5rem;" id="streamProgress" aria-live="polite"></p>
+        </div>
+
+        <div id="cacheIndicator" role="status" aria-live="polite" style="display: none; position: fixed; top: 2rem; right: 2rem; background: var(--accent); color: var(--bg-primary); padding: 1rem 1.5rem; border-radius: 8px; font-weight: 700; animation: fadeIn 0.3s ease-out; z-index: 1000; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);">
+            ✓ Loaded from cache
+        </div>
+
+        <div id="results" role="region" aria-label="Analysis results">
+            <div class="section">
+                <div class="section-title">Analysis Results</div>
+                <div id="resultsContent"></div>
+            </div>
+
+            <div class="section chat-container">
+                <div class="section-title">Follow-up Questions</div>
+                <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat conversation"></div>
+                <div class="chat-input-group">
+                    <textarea
+                        id="chatInput"
+                        placeholder="Ask questions about the feedback..."
+                        aria-label="Chat message input"
+                    ></textarea>
+                    <button onclick="sendChatMessage()" aria-label="Send message">Send</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="secondary" onclick="exportAsMarkdown()" title="Download analysis as Markdown file" aria-label="Export as Markdown">
+                        📄 Export MD
+                    </button>
+                    <button class="secondary" onclick="window.print()" title="Print or save as PDF" aria-label="Print or save as PDF">
+                        🖨️ Print/PDF
+                    </button>
+                </div>
+                <button class="secondary" onclick="resetAnalysis()" style="margin-top: 0.5rem; width: 100%;" aria-label="Analyze another resume">
+                    🔄 Analyze Another Resume
+                </button>
+                <button class="secondary" onclick="clearCacheAndNotify()" style="margin-top: 0.5rem; width: 100%;" aria-label="Clear all cached analyses">
+                    🗑️ Clear Cache
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        let resumeFile = null; // Store file info for direct upload
+        let resumeMimeType = null;
+
+        // Utility: Throttle function to limit execution rate
+        function throttle(func, limit) {
+            let inThrottle;
+            return function(...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        }
+
+        // Utility: Debounce function to delay execution
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        // Cache management with localStorage
+        const CACHE_KEY_PREFIX = 'ats_cache_';
+        const CACHE_INDEX_KEY = 'ats_cache_index';
+        const API_KEY_STORAGE_KEY = 'ats_api_key';
+        const CACHE_EXPIRATION_DAYS = 30;
+
+        function getCacheFromStorage(key) {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY_PREFIX + key);
+                return cached ? JSON.parse(cached) : null;
+            } catch (e) {
+                console.error('Error reading cache:', e);
+                return null;
+            }
+        }
+
+        function saveCacheToStorage(key, data) {
+            try {
+                localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify(data));
+
+                // Update cache index
+                let index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                if (!index.includes(key)) {
+                    index.push(key);
+                    localStorage.setItem(CACHE_INDEX_KEY, JSON.stringify(index));
+                }
+            } catch (e) {
+                console.error('Error saving cache:', e);
+            }
+        }
+
+        function clearAllCache() {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                index.forEach(key => {
+                    localStorage.removeItem(CACHE_KEY_PREFIX + key);
+                });
+                localStorage.removeItem(CACHE_INDEX_KEY);
+                console.log('Cache cleared');
+            } catch (e) {
+                console.error('Error clearing cache:', e);
+            }
+        }
+
+        // Clean expired cache entries
+        function cleanExpiredCache() {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                const now = Date.now();
+                const expirationMs = CACHE_EXPIRATION_DAYS * 24 * 60 * 60 * 1000;
+
+                index.forEach(key => {
+                    const cached = getCacheFromStorage(key);
+                    if (cached && cached.timestamp) {
+                        if (now - cached.timestamp > expirationMs) {
+                            localStorage.removeItem(CACHE_KEY_PREFIX + key);
+                            console.log('Expired cache removed:', key);
+                        }
+                    }
+                });
+
+                // Update index to remove expired entries
+                const newIndex = index.filter(key => {
+                    return localStorage.getItem(CACHE_KEY_PREFIX + key) !== null;
+                });
+                localStorage.setItem(CACHE_INDEX_KEY, JSON.stringify(newIndex));
+            } catch (e) {
+                console.error('Error cleaning expired cache:', e);
+            }
+        }
+
+        // API Key management
+        function toggleApiKeyVisibility() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const toggleBtn = document.getElementById('toggleApiKey');
+
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+                toggleBtn.title = 'Hide API key';
+            } else {
+                apiKeyInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+                toggleBtn.title = 'Show API key';
+            }
+        }
+
+        function loadSavedApiKey() {
+            try {
+                const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+                if (savedKey) {
+                    document.getElementById('apiKey').value = savedKey;
+                    document.getElementById('rememberApiKey').checked = true;
+                }
+            } catch (e) {
+                console.error('Error loading saved API key:', e);
+            }
+        }
+
+        function saveApiKey() {
+            const rememberCheckbox = document.getElementById('rememberApiKey');
+            const apiKey = document.getElementById('apiKey').value.trim();
+
+            if (rememberCheckbox.checked && apiKey) {
+                localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+            } else {
+                localStorage.removeItem(API_KEY_STORAGE_KEY);
+            }
+        }
+
+        let systemPrompt = `# ROLE
+You are an expert ATS (Applicant Tracking System) Resume Scorer specialized in the technology domain. Your purpose is to provide brutally honest, strict evaluation of resumes to help job seekers improve their chances of passing real ATS systems and human recruiters. You prioritize harsh but constructive feedback over politeness.
+
+# CURRENT DATE
+Today's date is ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD format). Use this for evaluating recency of experience, currency of technologies, and any time-sensitive aspects of the resume.
+
+# INPUT HANDLING
+You will receive:
+1. A resume in various formats (PDF, DOCX, plain text, YAML, or other structured formats)
+2. OPTIONAL: A specific job description to score against
+3. OPTIONAL: A job title or domain to evaluate against
+
+If no job description is provided, evaluate the resume against common requirements for the specified job title/domain within the tech industry.
+
+# TECH DOMAIN EXPERTISE
+You have deep knowledge of tech roles including but not limited to:
+- Data Engineering
+- Data Science
+- Machine Learning / AI Engineering
+- Backend Engineering
+- DevOps / SRE / Platform Engineering
+- Infrastructure Engineering
+- Full-Stack Engineering
+- Cloud Architecture
+
+You understand that skills often overlap across these domains and evaluate accordingly.
+
+# EVALUATION CRITERIA
+
+## 1. ATS Compatibility & Formatting (Weight: 20%)
+- File format compatibility
+- Use of standard section headers (Experience, Education, Skills, etc.)
+- Avoidance of tables, text boxes, headers/footers, images
+- Font readability and consistency
+- Proper use of bullet points
+- No columns or complex layouts
+- Chronological clarity (dates formatted consistently)
+- Contact information accessibility
+
+## 2. Keyword Optimization (Weight: 25%)
+- Presence of job-critical keywords from job description/domain
+- Technical skills mentioned explicitly
+- Tools, technologies, frameworks, languages
+- Certifications and methodologies
+- Industry-specific terminology
+- Action verbs and quantifiable achievements
+- Keyword density (not stuffed, naturally integrated)
+
+## 3. Experience Relevance (Weight: 25%)
+- Direct alignment with target role responsibilities
+- Progression of relevant experience
+- Recency of experience
+- Depth vs. breadth of skills demonstrated
+- Projects and accomplishments relevance
+- Leadership and impact demonstrated
+- Scale and complexity of work handled
+
+## 4. Skills Assessment (Weight: 15%)
+- Hard skills completeness for the role
+- Skills categorization (programming languages, frameworks, tools, cloud platforms, etc.)
+- Evidence of skills in experience section (not just listed)
+- Modern vs. outdated technologies
+- Depth indicators (years of experience, proficiency levels)
+
+## 5. Education & Certifications (Weight: 10%)
+- Relevant degree(s) for the role
+- Certifications (AWS, GCP, Azure, Kubernetes, etc.)
+- Continuous learning indicators
+- Relevant coursework or specializations
+
+## 6. Red Flags & Critical Issues (Weight: 5%)
+- Employment gaps without explanation
+- Job hopping (multiple roles < 1 year)
+- Typos, grammatical errors
+- Vague or generic descriptions
+- Missing critical information
+- Inconsistencies or formatting errors
+- Buzzwords without substance
+
+# OUTPUT FORMAT
+
+Provide your evaluation in the following structure:
+
+## OVERALL ATS SCORE: [0-100]
+**Pass Likelihood: [FAIL / UNLIKELY / POSSIBLE / LIKELY / VERY LIKELY]**
+
+---
+
+## CATEGORY SCORES
+
+### 1. ATS Compatibility & Formatting: [0-100]
+**Reasoning:** [2-3 sentences explaining the score]
+
+### 2. Keyword Optimization: [0-100]
+**Reasoning:** [2-3 sentences explaining the score]
+
+### 3. Experience Relevance: [0-100]
+**Reasoning:** [2-3 sentences explaining the score]
+
+### 4. Skills Assessment: [0-100]
+**Reasoning:** [2-3 sentences explaining the score]
+
+### 5. Education & Certifications: [0-100]
+**Reasoning:** [2-3 sentences explaining the score]
+
+### 6. Red Flags & Critical Issues: [0-100]
+**Reasoning:** [2-3 sentences explaining issues found]
+
+---
+
+## CRITICAL RED FLAGS 🚩
+[Bulleted list of deal-breakers or serious issues that would cause immediate rejection]
+
+---
+
+## MISSING CRITICAL ELEMENTS ⚠️
+[Bulleted list of must-have elements for this role that are absent]
+
+---
+
+## KEYWORD ANALYSIS
+**Keywords Found:** [List key technical terms/skills found]
+**Keywords Missing:** [List critical keywords for the role that are absent]
+**Keyword Density:** [Assessment of whether keywords are naturally integrated or stuffed]
+
+---
+
+## DETAILED FEEDBACK & IMPROVEMENTS
+
+### Strengths ✅
+[Bulleted list of what the resume does well]
+
+### Weaknesses ❌
+[Bulleted list of significant weaknesses]
+
+### Immediate Action Items (High Priority)
+1. [Specific, actionable improvement]
+2. [Specific, actionable improvement]
+3. [Specific, actionable improvement]
+
+### Additional Recommendations (Medium Priority)
+1. [Specific, actionable improvement]
+2. [Specific, actionable improvement]
+
+### Nice-to-Have Improvements (Low Priority)
+1. [Specific, actionable improvement]
+
+---
+
+## COMPETITIVE ANALYSIS
+**Against top candidates:** [How this resume compares to what top-tier candidates typically submit for this role]
+
+**Estimated ranking:** [Bottom 25% / Bottom 50% / Middle 50% / Top 25% / Top 10%]
+
+---
+
+## FINAL VERDICT
+[2-4 sentences summary: Would this pass an ATS? Would it get to a human reviewer? What's the single most important change needed?]
+
+# SCORING PHILOSOPHY
+
+- **90-100**: Exceptional resume, would likely pass most ATS systems and impress recruiters
+- **80-89**: Strong resume, likely to pass ATS with minor improvements needed
+- **70-79**: Decent resume, passes basic ATS but needs improvements to be competitive
+- **60-69**: Borderline resume, may pass some ATS systems but has significant gaps
+- **50-59**: Weak resume, unlikely to pass strict ATS systems
+- **Below 50**: Poor resume, needs major overhaul
+
+# CRITICAL RULES
+
+1. **Be Brutally Honest**: Job seekers prefer harsh truth over false hope. Don't sugarcoat.
+2. **Be Specific**: "Improve your skills section" is useless. "Add specific Python frameworks like FastAPI, Django, or Flask with years of experience" is helpful.
+3. **Prioritize ATS Reality**: Real ATS systems are unforgiving. Score accordingly.
+4. **Context Matters**: A Data Engineer resume should emphasize different skills than a Data Scientist resume, even if applying to overlapping roles.
+5. **Evidence-Based**: If claiming experience with a technology, it should appear in the experience section, not just the skills list.
+6. **Quantify Everything**: Achievements without metrics are weak. Flag this.
+7. **Modern Standards**: Outdated technologies (e.g., Hadoop MapReduce without Spark, PHP 5, etc.) should be noted.
+8. **No Fluff Tolerance**: Buzzwords like "synergy," "thought leader," "passionate" without concrete achievements are red flags.
+
+# TONE
+Professional, direct, and constructively critical. Think "tough but fair mentor" rather than "encouraging cheerleader." Your goal is to help job seekers succeed by showing them exactly what's wrong and how to fix it.`;
+
+        let resumeContent = '';
+        let jobContextValue = '';
+        let jobDescriptionValue = '';
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // File upload handling
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+
+        fileUpload.addEventListener('click', () => fileInput.click());
+
+        // Keyboard navigation for file upload
+        fileUpload.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        async function handleFileSelect(file) {
+            fileName.textContent = `Selected: ${file.name}`;
+            fileName.classList.remove('hidden');
+            
+            try {
+                // Check if it's a document type that should be sent directly (PDF, DOCX)
+                if (file.type === 'application/pdf' || 
+                    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                    file.name.endsWith('.docx')) {
+                    
+                    // Store file as base64 for direct API upload
+                    const arrayBuffer = await file.arrayBuffer();
+                    resumeFile = btoa(
+                        new Uint8Array(arrayBuffer).reduce(
+                            (data, byte) => data + String.fromCharCode(byte),
+                            ''
+                        )
+                    );
+                    resumeMimeType = file.type || 'application/pdf';
+                    resumeContent = null; // Clear text content
+                } else {
+                    // For text-based files (TXT, YAML, MD), read as text
+                    resumeContent = await file.text();
+                    resumeFile = null;
+                    resumeMimeType = null;
+                }
+            } catch (error) {
+                alert('Error reading file: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Generate cache key from resume, context, and model
+        async function generateCacheKey(resumeContent, resumeFile, jobContext, jobDescription, model) {
+            const content = resumeContent || resumeFile || '';
+            const context = jobContext || '';
+            const description = jobDescription || '';
+            const modelName = model || '';
+            const combined = content + '|||' + context + '|||' + description + '|||' + modelName;
+
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < combined.length; i++) {
+                const char = combined.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return 'analysis_' + Math.abs(hash).toString(36);
+        }
+
+        async function analyzeResume() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('Please enter your Gemini API key');
+                return;
+            }
+
+            // Get resume content based on active tab
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            
+            if (activeTab === 'upload') {
+                if (!resumeContent && !resumeFile) {
+                    alert('Please upload a resume file');
+                    return;
+                }
+            } else if (activeTab === 'paste') {
+                resumeContent = document.getElementById('resumeText').value.trim();
+                resumeFile = null;
+                resumeMimeType = null;
+                if (!resumeContent) {
+                    alert('Please paste your resume text');
+                    return;
+                }
+            } else if (activeTab === 'url') {
+                const url = document.getElementById('resumeUrl').value.trim();
+                if (!url) {
+                    alert('Please enter a resume URL');
+                    return;
+                }
+                try {
+                    const response = await fetch(url);
+                    const contentType = response.headers.get('content-type');
+                    
+                    // Check if it's a PDF or DOCX
+                    if (contentType && (contentType.includes('pdf') || contentType.includes('wordprocessingml'))) {
+                        const arrayBuffer = await response.arrayBuffer();
+                        resumeFile = btoa(
+                            new Uint8Array(arrayBuffer).reduce(
+                                (data, byte) => data + String.fromCharCode(byte),
+                                ''
+                            )
+                        );
+                        resumeMimeType = contentType.includes('pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                        resumeContent = null;
+                    } else {
+                        resumeContent = await response.text();
+                        resumeFile = null;
+                        resumeMimeType = null;
+                    }
+                } catch (error) {
+                    alert('Error fetching resume from URL: ' + error.message);
+                    return;
+                }
+            }
+
+            jobContextValue = document.getElementById('jobContext').value.trim();
+            jobDescriptionValue = document.getElementById('jobDescription').value.trim();
+
+            // Check if force regenerate is enabled
+            const forceRegenerate = document.getElementById('forceRegenerate').checked;
+
+            // Get selected model for cache key
+            const selectedModel = document.getElementById('modelSelect').value;
+
+            // Check cache first (unless force regenerate is enabled)
+            const cacheKey = await generateCacheKey(resumeContent, resumeFile, jobContextValue, jobDescriptionValue, selectedModel);
+            if (!forceRegenerate) {
+                const cachedData = getCacheFromStorage(cacheKey);
+                if (cachedData) {
+                    console.log('Using cached analysis from localStorage');
+                    conversationHistory = cachedData.conversationHistory;
+
+                    // Show cache indicator
+                    const cacheIndicator = document.getElementById('cacheIndicator');
+                    cacheIndicator.style.display = 'block';
+
+                    setTimeout(() => {
+                        displayResults(cachedData.response, false);
+                        document.getElementById('results').classList.add('active');
+                        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+                        // Hide cache indicator after 3 seconds
+                        setTimeout(() => {
+                            cacheIndicator.style.display = 'none';
+                        }, 3000);
+                    }, 100);
+
+                    return;
+                }
+            } else {
+                console.log('Force regenerate enabled - bypassing cache');
+            }
+
+            // Build user message parts
+            let userMessageParts = [];
+            
+            // Add text prompt first
+            let promptText = 'Please analyze this resume';
+            if (jobDescriptionValue) {
+                promptText += `\n\nJob Description:\n${jobDescriptionValue}`;
+            } else if (jobContextValue) {
+                promptText += `\n\nJob Context/Title: ${jobContextValue}`;
+            }
+            
+            userMessageParts.push({ text: promptText });
+            
+            // Add document or text content
+            if (resumeFile && resumeMimeType) {
+                // Send document directly
+                userMessageParts.push({
+                    inlineData: {
+                        mimeType: resumeMimeType,
+                        data: resumeFile
+                    }
+                });
+            } else if (resumeContent) {
+                // Send as text
+                userMessageParts.push({ text: `\n\nResume:\n${resumeContent}` });
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('analyzeBtn').disabled = true;
+
+            // Clear previous results
+            document.getElementById('resultsContent').innerHTML = '';
+            document.getElementById('results').classList.remove('active');
+
+            try {
+                conversationHistory = [
+                    {
+                        role: 'user',
+                        parts: [{ text: systemPrompt }]
+                    },
+                    {
+                        role: 'model',
+                        parts: [{ text: 'I understand. I will provide brutally honest ATS resume scoring with strict evaluation. Please provide the resume and any job description or context.' }]
+                    },
+                    {
+                        role: 'user',
+                        parts: userMessageParts
+                    }
+                ];
+
+                // Show results container immediately
+                document.getElementById('results').classList.add('active');
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+                // Create throttled display function to reduce re-renders
+                const throttledDisplay = throttle((text) => {
+                    displayResults(text, true);
+                }, 100);
+
+                let charCount = 0;
+                const response = await callGeminiAPI(apiKey, conversationHistory, (chunk, fullText) => {
+                    // Update progress indicator
+                    charCount = fullText.length;
+                    const wordCount = fullText.split(/\s+/).length;
+                    document.getElementById('streamProgress').textContent =
+                        `${charCount} characters • ${wordCount} words`;
+
+                    // Throttled update to reduce re-renders
+                    throttledDisplay(fullText);
+                });
+
+                // Clear progress indicator
+                document.getElementById('streamProgress').textContent = '';
+
+                // Final update with complete text
+                displayResults(response, false);
+
+                // Cache the result in localStorage
+                saveCacheToStorage(cacheKey, {
+                    response: response,
+                    conversationHistory: [...conversationHistory],
+                    timestamp: Date.now()
+                });
+                console.log('Analysis cached to localStorage');
+            } catch (error) {
+                alert('Error analyzing resume: ' + error.message);
+                console.error(error);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        // Retry with exponential backoff
+        async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    return await fn();
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+
+                    // Check if it's a rate limit error
+                    if (error.message.includes('429') || error.message.toLowerCase().includes('rate limit')) {
+                        const delay = initialDelay * Math.pow(2, i);
+                        console.log(`Rate limit hit, retrying in ${delay}ms...`);
+                        document.getElementById('loadingText').textContent =
+                            `Rate limit reached. Retrying in ${delay / 1000} seconds...`;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        async function callGeminiAPI(apiKey, messages, onChunk = null) {
+            const selectedModel = document.getElementById('modelSelect').value;
+
+            const makeRequest = async () => {
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: messages,
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 8192,
+                            }
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || `API request failed (${response.status})`;
+                    throw new Error(errorMessage);
+                }
+
+                return response;
+            };
+
+            const response = await retryWithBackoff(makeRequest);
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep incomplete line in buffer
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const jsonStr = line.slice(6);
+                        if (jsonStr.trim() === '') continue;
+
+                        try {
+                            const data = JSON.parse(jsonStr);
+                            if (data.candidates && data.candidates[0].content) {
+                                const chunk = data.candidates[0].content.parts[0].text;
+                                fullText += chunk;
+                                if (onChunk) {
+                                    onChunk(chunk, fullText);
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing SSE data:', e);
+                        }
+                    }
+                }
+            }
+
+            // Add AI response to conversation history
+            conversationHistory.push({
+                role: 'model',
+                parts: [{ text: fullText }]
+            });
+
+            return fullText;
+        }
+
+        function displayResults(markdown, isStreaming = false) {
+            const resultsContent = document.getElementById('resultsContent');
+
+            // Extract overall score if present
+            const scoreMatch = markdown.match(/OVERALL ATS SCORE:\s*(\d+)/);
+            const likelihoodMatch = markdown.match(/Pass Likelihood:\s*(\w+)/);
+
+            // Check if we already have the structure in place
+            let scoreHeader = resultsContent.querySelector('.score-header');
+            let markdownContent = resultsContent.querySelector('.markdown-content');
+
+            // Create structure if it doesn't exist
+            if (!markdownContent) {
+                resultsContent.innerHTML = `
+                    <div class="score-header" style="display: none;">
+                        <div class="overall-score"></div>
+                    </div>
+                    <div class="markdown-content"></div>
+                `;
+                scoreHeader = resultsContent.querySelector('.score-header');
+                markdownContent = resultsContent.querySelector('.markdown-content');
+            }
+
+            // Update score only if found and not already displayed
+            if (scoreMatch && scoreHeader) {
+                const score = scoreMatch[1];
+                const scoreElement = scoreHeader.querySelector('.overall-score');
+
+                // Only update if score changed or header is hidden
+                if (scoreElement.textContent !== `${score}/100`) {
+                    scoreElement.textContent = `${score}/100`;
+                    scoreHeader.style.display = 'block';
+                }
+            }
+
+            // Always update markdown content
+            if (markdownContent) {
+                markdownContent.innerHTML = marked.parse(markdown);
+            }
+
+            // Only scroll during streaming updates if user is near the bottom
+            if (isStreaming) {
+                const resultsDiv = document.getElementById('results');
+                const isNearBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100;
+                if (isNearBottom) {
+                    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }
+            }
+        }
+
+        async function sendChatMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+
+            if (!message) return;
+
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('API key is missing');
+                return;
+            }
+
+            // Add user message to chat
+            addChatMessage('user', message);
+            chatInput.value = '';
+
+            // Add user message to conversation history
+            conversationHistory.push({
+                role: 'user',
+                parts: [{ text: message }]
+            });
+
+            // Create placeholder for assistant response
+            const assistantMessageDiv = createChatMessage('assistant', '');
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.appendChild(assistantMessageDiv);
+            const contentDiv = assistantMessageDiv.querySelector('.chat-content');
+
+            try {
+                const response = await callGeminiAPI(apiKey, conversationHistory, (chunk, fullText) => {
+                    // Update chat message in real-time
+                    contentDiv.innerHTML = marked.parse(fullText);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+
+                // Final update
+                contentDiv.innerHTML = marked.parse(response);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                alert('Error sending message: ' + error.message);
+                console.error(error);
+                assistantMessageDiv.remove();
+            }
+        }
+
+        function createChatMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${role}`;
+
+            const label = document.createElement('div');
+            label.className = 'chat-message-label';
+            label.textContent = role === 'user' ? 'YOU' : 'ATS SCORER';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'chat-content';
+            if (role === 'assistant') {
+                contentDiv.innerHTML = marked.parse(content);
+            } else {
+                contentDiv.textContent = content;
+            }
+
+            messageDiv.appendChild(label);
+            messageDiv.appendChild(contentDiv);
+
+            return messageDiv;
+        }
+
+        function addChatMessage(role, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = createChatMessage(role, content);
+            chatMessages.appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Export analysis as Markdown
+        function exportAsMarkdown() {
+            const resultsContent = document.querySelector('#resultsContent .markdown-content');
+            if (!resultsContent) {
+                alert('No analysis results to export');
+                return;
+            }
+
+            // Get the markdown content from the conversationHistory
+            const lastResponse = conversationHistory[conversationHistory.length - 1];
+            if (!lastResponse || lastResponse.role !== 'model') {
+                alert('No analysis results to export');
+                return;
+            }
+
+            const markdown = lastResponse.parts[0].text;
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `ats-analysis-${timestamp}.md`;
+
+            // Create blob and download
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearCacheAndNotify() {
+            if (confirm('Are you sure you want to clear all cached analyses? This cannot be undone.')) {
+                clearAllCache();
+                alert('Cache cleared successfully!');
+            }
+        }
+
+        function resetAnalysis() {
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('chatMessages').innerHTML = '';
+            conversationHistory = [];
+            resumeContent = '';
+            resumeFile = null;
+            resumeMimeType = null;
+            document.getElementById('resumeText').value = '';
+            document.getElementById('resumeUrl').value = '';
+            document.getElementById('jobDescription').value = '';
+            fileName.classList.add('hidden');
+            fileInput.value = '';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Allow Enter to submit chat (Shift+Enter for new line)
+        document.getElementById('chatInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+
+        // Page initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved API key
+            loadSavedApiKey();
+
+            // Clean expired cache on page load
+            cleanExpiredCache();
+
+            // Save API key when changed
+            document.getElementById('apiKey').addEventListener('change', saveApiKey);
+            document.getElementById('rememberApiKey').addEventListener('change', saveApiKey);
+
+            // Add keyboard shortcut: Ctrl/Cmd + Enter to analyze
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    const analyzeBtn = document.getElementById('analyzeBtn');
+                    if (!analyzeBtn.disabled) {
+                        analyzeResume();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
